@@ -1,6 +1,19 @@
 # coding: utf-8
 from src.parser import parse
+from src.reader import Reader
 
 
 def json_decode(json_text):
-    return parse(json_text)
+    return parse(Reader(json_text))
+
+
+if __name__ == '__main__':
+    json_text = '''
+    {
+        "author": "annhuny",
+        "date": "20190625",
+        "version": 1.0,
+        "type": ["array", "string", "number", "object"]
+    }
+    '''
+    print(json_decode(json_text))

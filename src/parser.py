@@ -84,8 +84,9 @@ def parse_number(r):
         while r.peek() in _0TO9:
             r.move()
 
-    if r.peek() in {'e', 'E'}:
+    if r.peek() in INVOLUTION_SIGN:
         r.move()
+        is_decimal = True
         if r.peek() in POSITIVE_NEGATIVE_SIGN:
             r.move()
         if r.peek() not in _0TO9:
