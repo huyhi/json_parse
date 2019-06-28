@@ -1,5 +1,4 @@
 # coding: utf-8
-from src.exceptions import ParseException
 from src.parser import WHITE_SPACE
 
 

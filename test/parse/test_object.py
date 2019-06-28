@@ -11,3 +11,4 @@ class TestObject(unittest.TestCase):
         self.assertEqual({'key': ['a', 'b']}, parse_fun('{"key": ["a", "b"]}'))
         self.assertEqual({'key': True}, parse_fun('{"key": true}'))
         self.assertEqual({'key': {'nums': [1.1, 2, 3]}}, parse_fun('{"key": {"nums": [1.1, 2, 3]}}'))
+        self.assertEqual([{}, {}], parse_fun('[{}, {}]'))

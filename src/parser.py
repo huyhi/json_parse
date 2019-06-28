@@ -28,8 +28,7 @@ def parse(r):
         'f': parse_false
     }
 
-    while r.peek() in WHITE_SPACE:
-        r.move()
+    r.skip_white_space()
     character = r.peek()
 
     if character in _0TO9 | POSITIVE_NEGATIVE_SIGN:
@@ -124,13 +123,14 @@ def parse_string(r):
     return ''.join(parse_string_generator(r))
 
 
-def parse_array(r):
+def parse_array_generator(r):
     res = []
     if r.read() != '[':
         raise Exception()
 
     while r.peek() != ']':
-        res.append(parse(r))
+        # res.append(parse(r))
+        yield parse(r)
         r.skip_white_space()
         if r.peek() == ',':
             r.move()
@@ -141,10 +141,14 @@ def parse_array(r):
     return res
 
 
+def parse_array(r):
+    return list(parse_array_generator(r))
+
+
 def parse_object(r):
     res = {}
     if r.read() != '{':
-        raise Exception()
+        raise ParseException()
 
     while r.peek() != '}':
         r.skip_white_space()
@@ -160,5 +164,6 @@ def parse_object(r):
             if r.peek() == '}':
                 raise ParseException()
         res[key] = value
+    r.move()
 
     return res
