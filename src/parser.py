@@ -36,26 +36,23 @@ def parse(r):
     elif character in func_map:
         func = func_map.get(character)
     else:
-        raise ParseException()
+        r.raise_exception('unknown character {}'.format(character))
     return func(r)
 
 
 def parse_true(r):
-    if r.read(4) == 'true':
-        return True
-    raise ParseException()
+    r.expect('true')
+    return True
 
 
 def parse_false(r):
-    if r.read(5) == 'false':
-        return False
-    raise ParseException()
+    r.expect('false')
+    return False
 
 
 def parse_null(r):
-    if r.read(4) == 'null':
-        return None
-    raise ParseException()
+    r.expect('null')
+    return None
 
 
 # http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf
@@ -71,7 +68,7 @@ def parse_number(r):
         r.move()
     else:
         if r.read() not in _1TO9:
-            raise ParseException()
+            r.raise_exception('expect 1 to 9 after \'-\'')
         while r.peek() in _0TO9:
             r.move()
 
@@ -79,7 +76,7 @@ def parse_number(r):
         r.move()
         is_decimal = True
         if r.read() not in _0TO9:
-            raise ParseException()
+            r.raise_exception('expect 0 to 9 after \'.\'')
         while r.peek() in _0TO9:
             r.move()
 
@@ -89,7 +86,7 @@ def parse_number(r):
         if r.peek() in POSITIVE_NEGATIVE_SIGN:
             r.move()
         if r.peek() not in _0TO9:
-            raise ParseException()
+            r.raise_exception('expect 0 to 9 after \'E\'')
         while r.peek() in _0TO9:
             r.move()
 
@@ -99,8 +96,7 @@ def parse_number(r):
 
 
 def parse_string_generator(r):
-    if r.read() != '\"':
-        raise ParseException()
+    r.expect('"')
 
     while r.peek() != '\"':
         if r.peek() == '\\':
@@ -109,10 +105,10 @@ def parse_string_generator(r):
             if r.peek() in TRANSFERRED_CHAR:
                 yield TRANSFERRED_CHAR.get(r.read())
             else:
-                raise ParseException()
+                r.raise_exception('unkonw transferred character \'\\{}\''.format(r.peek))
         else:
             if ord(r.peek()) < 0x20:
-                raise ParseException()
+                r.raise_exception('character illegal')
             else:
                 yield r.read()
     # 最后再移动一下，解析完成后 p 应该是指向后一个引号的
@@ -125,8 +121,7 @@ def parse_string(r):
 
 def parse_array_generator(r):
     res = []
-    if r.read() != '[':
-        raise Exception()
+    r.expect('[')
 
     while r.peek() != ']':
         # res.append(parse(r))
@@ -135,7 +130,7 @@ def parse_array_generator(r):
         if r.peek() == ',':
             r.move()
             if r.peek() == ']':
-                raise ParseException()
+                r.raise_exception('\',\' can not appear after the last item of array')
     r.move()
 
     return res
@@ -147,22 +142,21 @@ def parse_array(r):
 
 def parse_object(r):
     res = {}
-    if r.read() != '{':
-        raise ParseException()
+    r.expect('{')
 
     while r.peek() != '}':
         r.skip_white_space()
+        # 这里 json 的规范是 object 的 key 必须是 string
         key = parse_string(r)
         r.skip_white_space()
-        if r.read() != ':':
-            raise ParseException()
+        r.expect(':')
         r.skip_white_space()
         value = parse(r)
         r.skip_white_space()
         if r.peek() == ',':
             r.move()
             if r.peek() == '}':
-                raise ParseException()
+                r.raise_exception('\',\' can not appear after the last item of object')
         res[key] = value
     r.move()
 
