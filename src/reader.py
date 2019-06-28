@@ -22,8 +22,6 @@ class Reader(object):
         self.move(offset)
         return res
 
-    def read_until(self, character):
+    def skip_white_space(self):
         while self.peek() in WHITE_SPACE:
-            self.move()
-        if self.peek() == character:
             self.move()

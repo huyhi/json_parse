@@ -20,6 +20,7 @@ TRANSFERRED_CHAR = {
 
 def parse(r):
     func_map = {
+        '{': parse_object,
         '[': parse_array,
         '"': parse_string,
         'n': parse_null,
@@ -62,6 +63,7 @@ def parse_null(r):
 def parse_number(r):
     # 记录开始解析时的指针位置
     start = r.p
+    is_decimal = False
 
     if r.peek() == '-':
         r.move()
@@ -76,6 +78,7 @@ def parse_number(r):
 
     if r.peek() == '.':
         r.move()
+        is_decimal = True
         if r.read() not in _0TO9:
             raise ParseException()
         while r.peek() in _0TO9:
@@ -91,7 +94,8 @@ def parse_number(r):
             r.move()
 
     end = r.p
-    return float(r.json_text[start: end])
+    slice = r.json_text[start: end]
+    return float(slice) if is_decimal else int(slice)
 
 
 def parse_string_generator(r):
@@ -126,7 +130,34 @@ def parse_array(r):
 
     while r.peek() != ']':
         res.append(parse(r))
-        r.read_until(',')
+        r.skip_white_space()
+        if r.peek() == ',':
+            r.move()
+            if r.peek() == ']':
+                raise ParseException()
     r.move()
+
+    return res
+
+
+def parse_object(r):
+    res = {}
+    if r.read() != '{':
+        raise Exception()
+
+    while r.peek() != '}':
+        r.skip_white_space()
+        key = parse_string(r)
+        r.skip_white_space()
+        if r.read() != ':':
+            raise ParseException()
+        r.skip_white_space()
+        value = parse(r)
+        r.skip_white_space()
+        if r.peek() == ',':
+            r.move()
+            if r.peek() == '}':
+                raise ParseException()
+        res[key] = value
 
     return res
